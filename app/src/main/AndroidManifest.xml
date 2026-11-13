@@ -11,6 +11,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".PrintActivity" android:exported="true" android:launchMode="singleTop"
+            android:theme="@android:style/Theme.DeviceDefault.Light.Dialog.NoActionBar"
+            android:excludeFromRecents="true" android:taskAffinity="">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="vhprint" android:host="raster" />
+            </intent-filter>
+        </activity>
         <service android:name=".ThermalPrintService" android:exported="true"
             android:label="VH Print (SUNMI 80mm)"
             android:permission="android.permission.BIND_PRINT_SERVICE">
