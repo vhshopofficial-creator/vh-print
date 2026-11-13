@@ -13,6 +13,9 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.net.Uri;
+import android.content.SharedPreferences;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -46,6 +49,31 @@ public class MainActivity extends Activity {
         button(box, "Allow Bluetooth", v -> askBt());
         button(box, "Test print", v -> testPrint());
         button(box, "Print settings (turn VH Print on)", v -> startActivity(new Intent(Settings.ACTION_PRINT_SETTINGS)));
+
+        // ---- Scan Verify floating over PokPok ----
+        TextView h2 = new TextView(this); h2.setText("\nScan Verify over PokPok"); h2.setTextSize(20); h2.setTypeface(null, Typeface.BOLD); h2.setTextColor(0xff15171c); box.addView(h2);
+        TextView d2 = new TextView(this); d2.setTextSize(14); d2.setPadding(0, 8, 0, 8);
+        d2.setText("Each scan goes to PokPok (as now) and to Scan Verify in a small window on top. "
+                + "Needs: Barcode Scanner app → Output method → Broadcast ON (already on).\n"
+                + "⠿ drag · ⌨ type a name/PIN (scans then go to Scan Verify only) · ▭ size · — hide");
+        box.addView(d2);
+        final SharedPreferences prefs = getSharedPreferences(ScanOverlayService.PREFS, MODE_PRIVATE);
+        final EditText url = new EditText(this); url.setSingleLine(true); url.setTextSize(14);
+        url.setHint("Scan Verify address (https://…)");
+        url.setText(prefs.getString(ScanOverlayService.KEY_URL, "https://m3ngy35-glitch.github.io/vhm-scan/"));
+        box.addView(url);
+        button(box, "1 · Allow ‘Display over other apps’", v -> startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()))));
+        button(box, "2 · Start Scan Verify over PokPok", v -> {
+            String u = url.getText().toString().trim();
+            if (!u.startsWith("https://")) { status.setText("✗ The address must start with https://"); return; }
+            prefs.edit().putString(ScanOverlayService.KEY_URL, u).apply();
+            if (!Settings.canDrawOverlays(this)) { status.setText("✗ Tap 1 first and allow VH Print"); return; }
+            if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED)
+                requestPermissions(new String[] { "android.permission.POST_NOTIFICATIONS" }, 8);
+            startForegroundService(new Intent(this, ScanOverlayService.class));
+            status.setText("✓ Scan Verify is on — open PokPok and scan");
+        });
+        button(box, "Stop Scan Verify window", v -> { startService(new Intent(this, ScanOverlayService.class).setAction(ScanOverlayService.STOP)); status.setText("Scan Verify window stopped"); });
         showState();
     }
 
